@@ -6,32 +6,36 @@ const ContactModel = require('./models/Contact')
 
 const app = express();
 
+dotenv.config();
 app.use(express.json());
 app.use(cors());
-
-dotenv.config();
 
 const port = process.env.PORT || 3000;
 const URI = process.env.MongoDB_URI;
 
-try {
-    mongoose.connect(URI, {});
-    console.log('MongoDB is Connected')
-} catch (error) {
-    console.log('Error', error);
-}
+mongoose.connect(URI, {
+}).then(() => {
+    console.log('MongoDB is Connected');
+}).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+});
+
 
 // API Creation 
 app.get("/", (req, res) => {
     res.send("Express App is Running");
 })
 
-// API for Contact 
-app.post('/contact', (req, res) => {
-    ContactModel.create(req.body)
-        .then(contacts => res.json(contacts))
-        .catch(err => res.json(err))
-})
+app.post('/contact', async (req, res) => {
+    try {
+        const contact = new ContactModel(req.body);
+        const savedContact = await contact.save();
+        res.status(201).json(savedContact);
+    } catch (err) {
+        console.error('Error saving contact:', err);
+        res.status(500).json({ error: 'Failed to save contact' });
+    }
+});
 
 
 
